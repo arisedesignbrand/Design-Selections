@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Arise Interiors — Room Summary</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --navy: #1a2744;
@@ -613,8 +614,33 @@
     <input class="b-input" id="inp-date"   type="date" oninput="updateHeader()" style="min-width:140px">
   </div>
   <div class="builder-actions">
+    <button class="btn-ghost" onclick="document.getElementById('xlsxFile').click()">⬆ Import Spreadsheet</button>
+    <input type="file" id="xlsxFile" accept=".xlsx,.xls" style="display:none" onchange="importSpreadsheet(this)">
     <button class="btn-ghost" onclick="window.print()">⎙ Print / PDF</button>
     <button class="btn-gold"  onclick="openPanel()">+ Add Item</button>
+  </div>
+</div>
+
+<!-- IMPORT REVIEW PANEL -->
+<div class="panel-overlay" id="importPanel">
+  <div class="panel" style="width:580px; max-width:96vw;">
+    <div class="panel-header">
+      <span class="panel-title">Import Selected Items</span>
+      <button class="panel-close" onclick="closeImportPanel()">✕</button>
+    </div>
+    <div class="panel-body" style="padding:0;">
+      <div style="padding:16px 28px 12px; border-bottom:1px solid var(--border); font-size:12px; color:var(--text-muted); line-height:1.6;">
+        The following <strong id="importCount" style="color:var(--navy)">0</strong> items were marked <em>Selected</em> in your spreadsheet. Review and confirm to add them to the room summary.
+      </div>
+      <div id="importList" style="max-height:360px; overflow-y:auto; padding:12px 28px;"></div>
+    </div>
+    <div class="panel-footer" style="justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; color:var(--text-muted);" id="importTotalLine"></span>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-outline" onclick="closeImportPanel()">Cancel</button>
+        <button class="btn-navy" onclick="confirmImport()">Add to Summary</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -888,6 +914,128 @@ items = [
 ];
 
 render();
+
+// ── IMPORT ────────────────────────────────────────────────────────────────────
+let pendingImportItems = [];
+
+function importSpreadsheet(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = new Uint8Array(e.target.result);
+    const wb   = XLSX.read(data, { type: 'array' });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+    // Find header row (row with 'Presented Furniture Item')
+    let headerIdx = -1;
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i] && rows[i].some(c => typeof c === 'string' && c.includes('Presented Furniture Item'))) {
+        headerIdx = i;
+        break;
+      }
+    }
+
+    if (headerIdx === -1) { alert('Could not find header row in spreadsheet.'); return; }
+
+    const headers = rows[headerIdx].map(h => (h||'').toString().trim().toLowerCase());
+    const nameIdx    = headers.findIndex(h => h.includes('presented furniture'));
+    const sizeIdx    = headers.findIndex(h => h.includes('size'));
+    const selectedIdx= headers.findIndex(h => h.includes('selected'));
+    const priceIdx   = headers.findIndex(h => h.includes('cleint price') || h.includes('client price'));
+    const vendorIdx  = headers.findIndex(h => h.includes('purchase location'));
+    const leadIdx    = headers.findIndex(h => h.includes('lead time'));
+    const urlIdx     = headers.findIndex(h => h.includes('url'));
+
+    pendingImportItems = [];
+
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || !row[nameIdx]) continue;
+
+      // Selected = TRUE (boolean) or 'TRUE' string or checkbox
+      const sel = row[selectedIdx];
+      const isSelected = sel === true || sel === 'TRUE' || sel === 1 || sel === 'true';
+      if (!isSelected) continue;
+
+      const name   = (row[nameIdx] || '').toString().trim();
+      const size   = sizeIdx >= 0 ? (row[sizeIdx] || '').toString().trim() : '';
+      const vendor = vendorIdx >= 0 ? (row[vendorIdx] || '').toString().trim() : '';
+      const lead   = leadIdx >= 0 ? (row[leadIdx] || '').toString().trim() : '';
+      const url    = urlIdx >= 0 ? (row[urlIdx] || '').toString().trim() : '';
+
+      // Clean client price — may be a number or string like "$929"
+      let price = 0;
+      if (priceIdx >= 0 && row[priceIdx] != null) {
+        const raw = row[priceIdx].toString().replace(/[^0-9.]/g,'');
+        price = parseFloat(raw) || 0;
+      }
+
+      // Build note from size + vendor
+      const noteParts = [];
+      if (size)   noteParts.push(size);
+      if (vendor) noteParts.push(vendor.split('\n')[0].trim()); // first line only
+
+      pendingImportItems.push({ id: uid(), name, mfr: '', price: price || '', note: noteParts.join(' · '), img: null, url });
+    }
+
+    showImportPanel();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showImportPanel() {
+  const list = document.getElementById('importList');
+  document.getElementById('importCount').textContent = pendingImportItems.length;
+
+  const total = pendingImportItems.reduce((s,i)=>s+(parseFloat(i.price)||0),0);
+  document.getElementById('importTotalLine').textContent =
+    total ? `Total: $${total.toLocaleString()}` : '';
+
+  list.innerHTML = pendingImportItems.map((item, idx) => `
+    <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--navy);font-weight:400;">${item.name}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;line-height:1.5;">${item.note}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:13px;color:var(--navy);font-weight:400;">${item.price ? '$'+parseFloat(item.price).toLocaleString() : '—'}</div>
+        <button onclick="removePending(${idx})" style="background:none;border:none;font-size:10px;color:var(--stone);cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;padding:0;transition:color 0.15s;" onmouseover="this.style.color='#c0392b'" onmouseout="this.style.color='var(--stone)'">Remove</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('importPanel').classList.add('open');
+}
+
+function removePending(idx) {
+  pendingImportItems.splice(idx, 1);
+  if (!pendingImportItems.length) { closeImportPanel(); return; }
+  showImportPanel();
+}
+
+function closeImportPanel() {
+  document.getElementById('importPanel').classList.remove('open');
+  pendingImportItems = [];
+}
+
+function confirmImport() {
+  // Clear seed items on first import
+  if (items.length && items[0].name === 'Milo Slipper Chair') items = [];
+  items.push(...pendingImportItems);
+
+  // Auto-populate client name from filename hint
+  const clientInput = document.getElementById('inp-client');
+  if (!clientInput.value) {
+    clientInput.value = 'McCullough';
+    updateHeader();
+  }
+
+  closeImportPanel();
+  render();
+}
 </script>
 </body>
 </html>
