@@ -668,6 +668,10 @@ render();
 @media print {
   .no-print, .drag-handle, .drop-zone { display: none !important; }
   .item-card { cursor: default; }
+  .room-section { break-before: page; }
+  .room-divider { display: none; }
+  .grand-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .doc-header, .grand-banner { break-inside: avoid; }
 }
 </style>
 </body>
