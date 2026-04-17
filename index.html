@@ -97,6 +97,12 @@
   .doc-date { font-size: 11px; color: var(--text-muted); letter-spacing: 0.08em; }
   .doc-type { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--stone); }
 
+  /* ── @PAGE — suppress browser headers/footers/page numbers ── */
+  @page {
+    margin: 0.4in;
+    size: letter portrait;
+  }
+
   /* ── GRAND TOTAL BANNER ── */
   .grand-banner {
     background: var(--navy);
@@ -119,41 +125,44 @@
 
   .room-header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    padding: 36px 56px 20px;
-    border-bottom: 1px solid var(--stone-light);
+    padding: 24px 56px;
     gap: 20px;
+    background: var(--navy);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .room-name {
     font-family: 'Cormorant Garamond', serif;
     font-size: 30px;
     font-weight: 400;
-    color: var(--navy);
+    color: white;
     letter-spacing: 0.02em;
   }
 
   .room-subtotal {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--text-muted);
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.65);
     white-space: nowrap;
     flex-shrink: 0;
   }
 
   .room-subtotal span {
-    color: var(--navy);
-    font-size: 24px;
+    color: white;
+    font-size: 22px;
+    font-weight: 400;
   }
 
   .room-count {
-    font-size: 10px;
+    font-size: 9px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: var(--stone);
-    margin-left: 8px;
+    color: rgba(255,255,255,0.45);
+    margin-left: 10px;
   }
 
   /* ── ITEMS GRID ── */
@@ -279,18 +288,6 @@
     <div class="doc-meta">
       <div class="doc-date">April 17, 2026</div>
       <div class="doc-type">Room Summary</div>
-    </div>
-  </div>
-
-  <!-- GRAND TOTAL BANNER -->
-  <div class="grand-banner">
-    <div class="grand-left">
-      <div class="grand-eyebrow">Total Investment</div>
-      <div class="grand-label">All Spaces · Selected Items</div>
-    </div>
-    <div class="grand-right">
-      <div class="grand-total">$54,607</div>
-      <div class="grand-note">Client Price · Excl. Tax &amp; Shipping</div>
     </div>
   </div>
 
@@ -670,8 +667,14 @@ render();
   .item-card { cursor: default; }
   .room-section { break-before: page; }
   .room-divider { display: none; }
-  .grand-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .doc-header, .grand-banner { break-inside: avoid; }
+  .grand-banner { display: none !important; }
+  .doc-header { break-inside: avoid; break-after: avoid; }
+  .room-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .builder-bar { display: none !important; }
+  .doc-footer { break-inside: avoid; }
 }
 </style>
 </body>
