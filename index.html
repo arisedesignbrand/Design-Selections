@@ -633,58 +633,204 @@ function loadEditImg(input) {
 </script>
 
 <!-- EDIT PANEL -->
-<div id="editOverlay" onclick="closeEdit()" style="display:none;position:fixed;inset:0;background:rgba(26,39,68,0.45);z-index:199;backdrop-filter:blur(2px);"></div>
-<div id="editPanel" style="
-  position:fixed; top:0; right:0; width:360px; height:100vh;
-  background:var(--warm-white); border-left:1px solid var(--border);
-  z-index:200; display:flex; flex-direction:column;
-  transform:translateX(100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);
-  box-shadow:-8px 0 32px rgba(0,0,0,0.15);">
-  <div style="padding:20px 24px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
-    <span style="font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:400; color:var(--navy);">Edit Item</span>
-    <button onclick="closeEdit()" style="background:none;border:none;font-size:18px;color:var(--stone);cursor:pointer;padding:2px 6px;">✕</button>
+<div id="editOverlay" onclick="closeEdit()"></div>
+<div id="editPanel">
+  <div class="ep-header">
+    <span class="ep-title">Edit Item</span>
+    <button onclick="closeEdit()" class="ep-close">✕</button>
   </div>
-  <div style="flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:14px;">
-    <div style="display:flex;flex-direction:column;gap:5px;">
-      <label style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);">Item Name</label>
-      <input id="ep-name" style="border:1px solid var(--border);border-radius:3px;padding:9px 12px;font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--ink);outline:none;background:white;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'">
+  <div class="ep-body">
+    <div class="ep-group">
+      <label class="ep-label">Item Name</label>
+      <input class="ep-input" id="ep-name">
     </div>
-    <div style="display:flex;flex-direction:column;gap:5px;">
-      <label style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);">Manufacturer / Line</label>
-      <input id="ep-mfr" style="border:1px solid var(--border);border-radius:3px;padding:9px 12px;font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--ink);outline:none;background:white;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'">
+    <div class="ep-group">
+      <label class="ep-label">Manufacturer / Line</label>
+      <input class="ep-input" id="ep-mfr">
     </div>
-    <div style="display:flex;flex-direction:column;gap:5px;">
-      <label style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);">Notes / Spec Details</label>
-      <textarea id="ep-note" rows="3" style="border:1px solid var(--border);border-radius:3px;padding:9px 12px;font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--ink);outline:none;background:white;resize:vertical;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    <div class="ep-group">
+      <label class="ep-label">Notes / Spec Details</label>
+      <textarea class="ep-input ep-textarea" id="ep-note" rows="3"></textarea>
     </div>
-    <div style="display:flex;flex-direction:column;gap:5px;">
-      <label style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);">Client Price ($)</label>
-      <input id="ep-price" type="number" style="border:1px solid var(--border);border-radius:3px;padding:9px 12px;font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--ink);outline:none;background:white;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'">
+    <div class="ep-group">
+      <label class="ep-label">Client Price ($)</label>
+      <input class="ep-input" id="ep-price" type="number">
     </div>
-    <div style="display:flex;flex-direction:column;gap:5px;">
-      <label style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);">Photo</label>
-      <div onclick="document.getElementById('ep-img-file').click()" style="border:2px dashed var(--border);border-radius:3px;aspect-ratio:4/3;cursor:pointer;overflow:hidden;position:relative;background:var(--off-white);transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--navy)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div class="ep-group">
+      <label class="ep-label">Photo</label>
+      <div class="ep-img-upload" onclick="document.getElementById('ep-img-file').click()">
         <input type="file" id="ep-img-file" accept="image/*" onchange="loadEditImg(this)" style="display:none">
-        <img id="ep-img-preview" style="width:100%;height:100%;object-fit:cover;display:none;">
-        <div id="ep-img-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--stone);">
+        <img id="ep-img-preview" style="width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0;">
+        <div id="ep-img-placeholder">
           <span style="font-size:24px;opacity:0.5;">🖼</span>
-          <span style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;">Click to upload</span>
+          <span class="ep-label">Click to upload</span>
         </div>
       </div>
     </div>
   </div>
-  <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
-    <button onclick="closeEdit()" style="padding:9px 20px;background:none;border:1px solid var(--border);border-radius:3px;color:var(--text-muted);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;">Cancel</button>
-    <button onclick="saveEdit()" style="padding:9px 20px;background:var(--navy);border:1px solid var(--navy);border-radius:3px;color:white;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;">Save</button>
+  <div class="ep-footer">
+    <button onclick="closeEdit()" class="ep-btn-cancel">Cancel</button>
+    <button onclick="saveEdit()" class="ep-btn-save">Save</button>
   </div>
 </div>
 
 <style>
-#editPanel.open { transform: translateX(0); }
-.edit-btn { margin-right: 6px; }
-</style>
+/* ── EDIT PANEL ── */
+#editOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,39,68,0.45);
+  z-index: 199;
+  backdrop-filter: blur(2px);
+}
 
-<style>
+#editPanel {
+  position: fixed;
+  top: 0; right: 0;
+  width: 360px;
+  height: 100vh;
+  background: #faf9f6;
+  border-left: 1px solid #dddad4;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+}
+
+#editPanel.open { transform: translateX(0); }
+
+.ep-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #dddad4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.ep-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: #1a2744;
+}
+
+.ep-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #c8c0b0;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: color 0.15s;
+}
+.ep-close:hover { color: #1a2744; }
+
+.ep-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ep-group { display: flex; flex-direction: column; gap: 5px; }
+
+.ep-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6a6a72;
+  font-family: 'Jost', sans-serif;
+  font-weight: 400;
+}
+
+.ep-input {
+  border: 1px solid #dddad4;
+  border-radius: 3px;
+  padding: 9px 12px;
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  color: #1a1e2a;
+  outline: none;
+  background: white;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.ep-input:focus { border-color: #1a2744; }
+
+.ep-textarea { resize: vertical; min-height: 72px; }
+
+.ep-img-upload {
+  border: 2px dashed #dddad4;
+  border-radius: 3px;
+  aspect-ratio: 4/3;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  background: #f4f2ed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+.ep-img-upload:hover { border-color: #1a2744; }
+
+#ep-img-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #c8c0b0;
+}
+
+.ep-footer {
+  padding: 14px 24px;
+  border-top: 1px solid #dddad4;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.ep-btn-cancel {
+  padding: 9px 20px;
+  background: none;
+  border: 1px solid #dddad4;
+  border-radius: 3px;
+  color: #6a6a72;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ep-btn-cancel:hover { border-color: #1a2744; color: #1a2744; }
+
+.ep-btn-save {
+  padding: 9px 20px;
+  background: #1a2744;
+  border: 1px solid #1a2744;
+  border-radius: 3px;
+  color: white;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ep-btn-save:hover { background: #2a3a5c; }
+
+.edit-btn { margin-right: 6px; }
+
 /* ── DRAG & DROP STYLES ── */
 .drag-handle {
   position: absolute;
