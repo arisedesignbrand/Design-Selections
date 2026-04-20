@@ -23,7 +23,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--warm-white);
+    background: white;
     color: var(--ink);
     font-family: 'Jost', sans-serif;
     font-weight: 300;
@@ -253,12 +253,17 @@
   .footer-contact { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.7; }
   .footer-disclaimer { font-family: 'Cormorant Garamond', serif; font-size: 12px; color: var(--stone); font-style: italic; text-align: right; max-width: 220px; line-height: 1.6; }
 
-  /* ── PRINT ── */
-  @media print {
-    .builder-bar { display: none !important; }
+  @page {
+    margin: 0.3in;
+    size: letter portrait;
+    background: white;
+  }
 
+  @media print {
+    html { background: white !important; }
     html, body {
       background: white !important;
+      background-color: white !important;
       margin: 0 !important;
       padding: 0 !important;
       width: 100% !important;
@@ -269,20 +274,22 @@
       width: 100% !important;
       margin: 0 !important;
       padding: 0 !important;
+      background: white !important;
     }
 
-    .room-section { break-before: page; }
+    .room-section { break-before: page; background: white !important; }
     .room-divider { display: none; }
     .grand-banner { display: none !important; }
-    .doc-header { break-inside: avoid; break-after: avoid; }
+    .doc-header { break-inside: avoid; break-after: avoid; background: white !important; }
     .room-header {
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .doc-footer { break-inside: avoid; }
+    .doc-footer { break-inside: avoid; background: white !important; }
     .item-card { break-inside: avoid; background: white !important; }
     .items-grid { background: white !important; padding-left: 28px !important; padding-right: 28px !important; }
     .no-print, .drag-handle, .drop-zone, .add-card { display: none !important; }
+    .builder-bar { display: none !important; }
   }
 </style>
 </head>
