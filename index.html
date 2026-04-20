@@ -456,13 +456,20 @@ function render() {
             <span class="room-name">${sec.room}</span>
             <span class="room-count">${sec.items.length} item${sec.items.length !== 1 ? 's' : ''}</span>
           </div>
-          <div class="room-subtotal">Subtotal &nbsp;<span>${priceStr}</span></div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <button class="add-item-btn no-print" onclick="openAddItem('${sec.room}')">+ Add Item</button>
+            <div class="room-subtotal">Subtotal &nbsp;<span>${priceStr}</span></div>
+          </div>
         </div>
         <div class="items-grid" id="grid-${sec.room.replace(/[^a-z]/gi,'_')}"
              ondragover="onDragOver(event,'${sec.room}')"
              ondragleave="onDragLeave(event)"
              ondrop="onDrop(event,'${sec.room}')">
           ${cardsHtml}
+          <div class="add-card no-print" onclick="openAddItem('${sec.room}')">
+            <span class="add-card-icon">+</span>
+            <span class="add-card-text">Add Item</span>
+          </div>
           ${dropZone}
         </div>
       </div>`;
@@ -597,9 +604,31 @@ function loadData(input) {
   reader.readAsText(file);
 }
 
+function openAddItem(room) {
+  editingItemId = null;
+  editingImg    = null;
+  editingRoom   = room;
+
+  document.getElementById('ep-name').value  = '';
+  document.getElementById('ep-mfr').value   = '';
+  document.getElementById('ep-note').value  = '';
+  document.getElementById('ep-price').value = '';
+  document.querySelector('.ep-title').textContent = `Add Item — ${room}`;
+
+  const preview = document.getElementById('ep-img-preview');
+  const placeholder = document.getElementById('ep-img-placeholder');
+  preview.style.display = 'none';
+  placeholder.style.display = 'flex';
+
+  document.getElementById('editPanel').classList.add('open');
+  document.getElementById('editOverlay').style.display = 'block';
+  setTimeout(() => document.getElementById('ep-name').focus(), 200);
+}
+
 // ── EDIT ITEM ─────────────────────────────────────────────────────────────────
 let editingItemId = null;
 let editingImg    = null;
+let editingRoom   = null;
 
 function findItem(id) {
   for (const sec of sections) {
@@ -614,7 +643,9 @@ function openEdit(itemId) {
   if (!item) return;
   editingItemId = itemId;
   editingImg    = item.img || null;
+  editingRoom   = null;
 
+  document.querySelector('.ep-title').textContent = 'Edit Item';
   document.getElementById('ep-name').value  = item.name  || '';
   document.getElementById('ep-mfr').value   = item.mfr   || '';
   document.getElementById('ep-note').value  = item.note  || '';
@@ -644,13 +675,23 @@ function closeEdit() {
 }
 
 function saveEdit() {
-  const item = findItem(editingItemId);
-  if (!item) return;
-  item.name  = document.getElementById('ep-name').value.trim();
-  item.mfr   = document.getElementById('ep-mfr').value.trim();
-  item.note  = document.getElementById('ep-note').value.trim();
-  item.price = document.getElementById('ep-price').value;
-  item.img   = editingImg;
+  const name  = document.getElementById('ep-name').value.trim();
+  const mfr   = document.getElementById('ep-mfr').value.trim();
+  const note  = document.getElementById('ep-note').value.trim();
+  const price = document.getElementById('ep-price').value;
+
+  if (editingItemId) {
+    // Editing existing item
+    const item = findItem(editingItemId);
+    if (item) Object.assign(item, { name, mfr, note, price, img: editingImg });
+  } else {
+    // Adding new item to room
+    const sec = sections.find(s => s.room === editingRoom);
+    if (sec) {
+      sec.items.push({ id: uid(), name, mfr, note, price, img: editingImg });
+    }
+  }
+
   closeEdit();
   render();
 }
@@ -869,6 +910,42 @@ function loadEditImg(input) {
 .ep-btn-save:hover { background: #2a3a5c; }
 
 .edit-btn { margin-right: 6px; }
+
+/* ── ADD ITEM BUTTON & CARD ── */
+.add-item-btn {
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 3px;
+  color: white;
+  font-family: 'Jost', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.add-item-btn:hover { background: rgba(255,255,255,0.22); }
+
+.add-card {
+  border: 2px dashed #dddad4;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  min-height: 200px;
+  transition: all 0.2s;
+  background: #f4f2ed;
+  color: #c8c0b0;
+}
+.add-card:hover { border-color: #1a2744; color: #1a2744; background: #e8ecf4; }
+.add-card-icon { font-size: 24px; }
+.add-card-text { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; font-family: 'Jost', sans-serif; font-weight: 400; }
 
 /* ── DRAG & DROP STYLES ── */
 .drag-handle {
