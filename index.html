@@ -12,7 +12,7 @@
     --navy-light: #e8ecf4;
     --ink: #1a1e2a;
     --warm-white: #faf9f6;
-    --off-white: #f4f2ed;
+    --off-white: #ffffff;
     --stone: #c8c0b0;
     --stone-light: #e8e4dc;
     --gold: #b8985a;
@@ -185,7 +185,6 @@
   }
 
   .item-card:hover {
-    box-shadow: 0 4px 20px rgba(26,39,68,0.09);
     transform: translateY(-1px);
   }
 
@@ -290,6 +289,11 @@
     .items-grid { background: white !important; padding-left: 28px !important; padding-right: 28px !important; }
     .no-print, .drag-handle, .drop-zone, .add-card { display: none !important; }
     .builder-bar { display: none !important; }
+    .item-img { background: white !important; }
+    .item-info { background: white !important; }
+    .doc-header { background: white !important; }
+    * { box-shadow: none !important; }
+    html { overflow: hidden !important; }
   }
 </style>
 </head>
@@ -806,7 +810,6 @@ function loadEditImg(input) {
   flex-direction: column;
   transform: translateX(100%);
   transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-  box-shadow: -8px 0 32px rgba(0,0,0,0.15);
 }
 
 #editPanel.open { transform: translateX(0); }
