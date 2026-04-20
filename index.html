@@ -433,53 +433,98 @@ function render() {
 
   sections.forEach((sec, secIdx) => {
     const subtotal = sec.items.reduce((s,i) => s + (parseFloat(i.price)||0), 0);
-    const priceStr = subtotal ? '$' + subtotal.toLocaleString('en-US', {minimumFractionDigits:0}) : 'TBD';
+    const priceStr = subtotal ? '$' + subtotal.toLocaleString('en-US', {minimumFractionDigits:0}) : 'N/A';
 
-    let cardsHtml = '';
-    sec.items.forEach(item => {
-      const imgHtml = item.img
-        ? `<img src="${item.img}" alt="">`
-        : `<div class="img-placeholder">
-             <span class="img-placeholder-icon">🖼</span>
-             <span class="img-placeholder-text">No photo</span>
-           </div>`;
+    // Smart column layout: use 2-col for rooms with 4-6 items, 3-col otherwise
+    // This keeps more rows on a single page
+    const count = sec.items.length;
+    const cols = count <= 2 ? 2 : count <= 4 ? 2 : 3;
+    const colStyle = `grid-template-columns: repeat(${cols}, 1fr);`;
 
-      // Move-to menu options
-      const moveOptions = sections
-        .filter(s => s.room !== sec.room)
-        .map(s => `<div class="move-option" onclick="moveItem('${item.id}','${sec.room}','${s.room}')">${s.room}</div>`)
-        .join('');
+    // Split items into page-sized chunks to insert "continued" headers
+    // At 3-col: 6 per page. At 2-col: 4 per page (with header ~80px)
+    const perPage = cols === 2 ? 4 : 6;
+    const chunks = [];
+    for (let i = 0; i < sec.items.length; i += perPage) {
+      chunks.push(sec.items.slice(i, i + perPage));
+    }
 
-      cardsHtml += `
-        <div class="item-card" id="card-${item.id}"
-             draggable="true"
-             ondragstart="onDragStart(event,'${item.id}','${sec.room}')"
-             ondragend="onDragEnd(event)">
-          <div class="drag-handle" title="Drag to move">⠿</div>
-          <div class="item-img">${imgHtml}</div>
-          <div class="item-info">
-            <div class="item-name">${item.name}</div>
-            ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
-          </div>
-          <div class="item-move-row no-print">
-            <button class="move-btn edit-btn" onclick="openEdit('${item.id}')">✎ Edit</button>
-            <div class="move-wrap">
-              <button class="move-btn" onclick="toggleMoveMenu(event,'${item.id}')">Move to room ▾</button>
-              <div class="move-menu ${moveMenuOpen===item.id?'open':''}" id="menu-${item.id}">
-                ${moveOptions}
+    let sectionsHtml = '';
+    chunks.forEach((chunkItems, chunkIdx) => {
+      let cardsHtml = '';
+      chunkItems.forEach(item => {
+        const imgHtml = item.img
+          ? `<img src="${item.img}" alt="">`
+          : `<div class="img-placeholder">
+               <span class="img-placeholder-icon">🖼</span>
+               <span class="img-placeholder-text">No photo</span>
+             </div>`;
+
+        const moveOptions = sections
+          .filter(s => s.room !== sec.room)
+          .map(s => `<div class="move-option" onclick="moveItem('${item.id}','${sec.room}','${s.room}')">${s.room}</div>`)
+          .join('');
+
+        cardsHtml += `
+          <div class="item-card" id="card-${item.id}"
+               draggable="true"
+               ondragstart="onDragStart(event,'${item.id}','${sec.room}')"
+               ondragend="onDragEnd(event)">
+            <div class="drag-handle" title="Drag to move">⠿</div>
+            <div class="item-img">${imgHtml}</div>
+            <div class="item-info">
+              <div class="item-name">${item.name}</div>
+              ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+            </div>
+            <div class="item-move-row no-print">
+              <button class="move-btn edit-btn" onclick="openEdit('${item.id}')">✎ Edit</button>
+              <div class="move-wrap">
+                <button class="move-btn" onclick="toggleMoveMenu(event,'${item.id}')">Move to room ▾</button>
+                <div class="move-menu ${moveMenuOpen===item.id?'open':''}" id="menu-${item.id}">
+                  ${moveOptions}
+                </div>
               </div>
             </div>
-          </div>
-        </div>`;
-    });
+          </div>`;
+      });
 
-    // Drop zone
-    const dropZone = `<div class="drop-zone" id="drop-${sec.room.replace(/[^a-z]/gi,'_')}"
-      ondragover="onDragOver(event,'${sec.room}')"
-      ondragleave="onDragLeave(event)"
-      ondrop="onDrop(event,'${sec.room}')">
-      Drop item here
-    </div>`;
+      // Drop zone only on last chunk
+      const dropZone = chunkIdx === chunks.length - 1 ? `
+        <div class="drop-zone" id="drop-${sec.room.replace(/[^a-z]/gi,'_')}"
+          ondragover="onDragOver(event,'${sec.room}')"
+          ondragleave="onDragLeave(event)"
+          ondrop="onDrop(event,'${sec.room}')">
+          Drop item here
+        </div>
+        <div class="add-card no-print" onclick="openAddItem('${sec.room}')">
+          <span class="add-card-icon">+</span>
+          <span class="add-card-text">Add Item</span>
+        </div>` : '';
+
+      // Continued header for chunks after the first
+      const continuedHeader = chunkIdx > 0 ? `
+        <div class="room-header continued-header">
+          <div>
+            <span class="room-name">${sec.room}</span>
+            <span class="room-count continued-label">continued</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="room-subtotal">Subtotal &nbsp;<span>${priceStr}</span></div>
+          </div>
+        </div>` : '';
+
+      sectionsHtml += `
+        ${chunkIdx > 0 ? '<div class="page-chunk">' : ''}
+        ${continuedHeader}
+        <div class="items-grid" style="${colStyle}" id="grid-${sec.room.replace(/[^a-z]/gi,'_')}-${chunkIdx}"
+             ondragover="onDragOver(event,'${sec.room}')"
+             ondragleave="onDragLeave(event)"
+             ondrop="onDrop(event,'${sec.room}')">
+          ${cardsHtml}
+          ${dropZone}
+        </div>
+        ${chunkIdx > 0 ? '</div>' : ''}`;
+    });
 
     container.innerHTML += `
       ${secIdx > 0 ? '<div class="room-divider"></div>' : ''}
@@ -494,17 +539,7 @@ function render() {
             <div class="room-subtotal">Subtotal &nbsp;<span>${priceStr}</span></div>
           </div>
         </div>
-        <div class="items-grid" id="grid-${sec.room.replace(/[^a-z]/gi,'_')}"
-             ondragover="onDragOver(event,'${sec.room}')"
-             ondragleave="onDragLeave(event)"
-             ondrop="onDrop(event,'${sec.room}')">
-          ${cardsHtml}
-          <div class="add-card no-print" onclick="openAddItem('${sec.room}')">
-            <span class="add-card-icon">+</span>
-            <span class="add-card-text">Add Item</span>
-          </div>
-          ${dropZone}
-        </div>
+        ${sectionsHtml}
       </div>`;
   });
 
@@ -942,6 +977,22 @@ function loadEditImg(input) {
 .ep-btn-save:hover { background: #2a3a5c; }
 
 .edit-btn { margin-right: 6px; }
+
+/* ── CONTINUED HEADER ── */
+.page-chunk { break-before: page; }
+
+.continued-header {
+  break-before: avoid;
+}
+
+.continued-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-left: 10px;
+  font-style: italic;
+}
 
 /* ── ADD ITEM BUTTON & CARD ── */
 .add-item-btn {
