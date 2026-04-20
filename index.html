@@ -99,7 +99,7 @@
 
   /* ── @PAGE — suppress browser headers/footers/page numbers ── */
   @page {
-    margin: 0.4in;
+    margin: 0;
     size: letter portrait;
   }
 
@@ -256,11 +256,33 @@
   /* ── PRINT ── */
   @media print {
     .builder-bar { display: none !important; }
-    body { background: white; }
-    .document { max-width: 100%; }
-    .room-section { break-inside: avoid; }
-    .item-card { break-inside: avoid; }
-    .grand-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    html, body {
+      background: white !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+
+    .document {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .room-section { break-before: page; }
+    .room-divider { display: none; }
+    .grand-banner { display: none !important; }
+    .doc-header { break-inside: avoid; break-after: avoid; }
+    .room-header {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .doc-footer { break-inside: avoid; }
+    .item-card { break-inside: avoid; background: white !important; }
+    .items-grid { background: white !important; padding-left: 28px !important; padding-right: 28px !important; }
+    .no-print, .drag-handle, .drop-zone, .add-card { display: none !important; }
   }
 </style>
 </head>
