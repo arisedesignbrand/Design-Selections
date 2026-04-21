@@ -476,7 +476,7 @@ function render() {
             <div class="item-img">${imgHtml}</div>
             <div class="item-info">
               <div class="item-name">${item.name}</div>
-              ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+              ${item.note ? `<div class="item-note">${item.note.replace(/\n/g,'<br>')}</div>` : ''}
             </div>
             <div class="item-move-row no-print">
               <button class="move-btn edit-btn" data-edit-id="${item.id}" onclick="openEdit(this.dataset.editId)">✎ Edit</button>
@@ -694,6 +694,7 @@ function openAddItem(room) {
   document.getElementById('ep-note').value  = '';
   document.getElementById('ep-price').value = '';
   document.querySelector('.ep-title').textContent = `Add Item — ${room}`;
+  document.getElementById('ep-btn-delete').classList.remove('visible');
 
   const preview = document.getElementById('ep-img-preview');
   const placeholder = document.getElementById('ep-img-placeholder');
@@ -723,6 +724,7 @@ function openEdit(itemId) {
   editingRoom   = null;
 
   document.querySelector('.ep-title').textContent = 'Edit Item';
+  document.getElementById('ep-btn-delete').classList.add('visible');
   document.getElementById('ep-name').value  = item.name  || '';
   document.getElementById('ep-mfr').value   = item.mfr   || '';
   document.getElementById('ep-note').value  = item.note  || '';
@@ -769,6 +771,17 @@ function saveEdit() {
     }
   }
 
+  closeEdit();
+  render();
+}
+
+function deleteItem() {
+  if (!editingItemId) return;
+  if (!confirm('Remove this item from the summary?')) return;
+  for (const sec of sections) {
+    const idx = sec.items.findIndex(i => i.id === editingItemId);
+    if (idx >= 0) { sec.items.splice(idx, 1); break; }
+  }
   closeEdit();
   render();
 }
@@ -826,8 +839,11 @@ function loadEditImg(input) {
     </div>
   </div>
   <div class="ep-footer">
-    <button onclick="closeEdit()" class="ep-btn-cancel">Cancel</button>
-    <button onclick="saveEdit()" class="ep-btn-save">Save</button>
+    <button onclick="deleteItem()" class="ep-btn-delete" id="ep-btn-delete">Delete</button>
+    <div style="display:flex;gap:10px;margin-left:auto;">
+      <button onclick="closeEdit()" class="ep-btn-cancel">Cancel</button>
+      <button onclick="saveEdit()" class="ep-btn-save">Save</button>
+    </div>
   </div>
 </div>
 
@@ -984,6 +1000,23 @@ function loadEditImg(input) {
   transition: background 0.15s;
 }
 .ep-btn-save:hover { background: #2a3a5c; }
+
+.ep-btn-delete {
+  padding: 9px 16px;
+  background: none;
+  border: 1px solid #dddad4;
+  border-radius: 3px;
+  color: #b86060;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: none;
+}
+.ep-btn-delete:hover { background: #fdecea; border-color: #b86060; }
+.ep-btn-delete.visible { display: block; }
 
 .edit-btn { margin-right: 6px; }
 
